@@ -1,0 +1,37 @@
+{
+  "name": "blastmap",
+  "version": "0.1.0",
+  "description": "What could your coding agent delete, publish or change right now? A read-only blast-radius scan for Claude Code, Codex and other agents.",
+  "type": "module",
+  "bin": {
+    "blastmap": "bin/blastmap.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "skill",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/rules.test.js test/collect.test.js",
+    "sync-docs": "node scripts/sync-docs.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "claude-code",
+    "codex",
+    "ai-agents",
+    "security",
+    "least-privilege",
+    "blast-radius",
+    "audit"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thinx-pro/blastmap.git"
+  }
+}

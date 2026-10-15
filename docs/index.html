@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>blastmap checker</title>
+<meta name="description" content="Paste your Claude Code settings.json, Codex config.toml, kubeconfig, shell rc or gh auth status and see what an agent could do with it. Runs in your browser; nothing is uploaded.">
+<style>
+:root{
+  --bg:#f7f7f5;--panel:#ffffff;--ink:#1d1f23;--muted:#62666d;--line:#e3e3df;
+  --high:#c62828;--high-bg:#fdecea;--med:#a35c00;--med-bg:#fff4e0;--info:#5b6470;--info-bg:#eef1f4;
+  --accent:#1f6feb;--code:#f0f0ec;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1115;--panel:#171a20;--ink:#e7e9ee;--muted:#9aa1ab;--line:#2a2f37;
+    --high:#ff7b72;--high-bg:#3a1714;--med:#f2cc60;--med-bg:#33280f;--info:#a4adb8;--info-bg:#1f242b;
+    --accent:#58a6ff;--code:#1f242b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a20;--ink:#e7e9ee;--muted:#9aa1ab;--line:#2a2f37;
+  --high:#ff7b72;--high-bg:#3a1714;--med:#f2cc60;--med-bg:#33280f;--info:#a4adb8;--info-bg:#1f242b;
+  --accent:#58a6ff;--code:#1f242b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:28px 16px 60px}
+h1{font-size:28px;margin:0 0 4px;letter-spacing:-.02em}
+h1 span{color:var(--muted);font-weight:500}
+.lede{color:var(--muted);margin:0 0 20px;max-width:720px}
+code,textarea,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
+textarea{width:100%;min-height:340px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--bg);color:var(--ink);font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:7px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.kind{font-size:12px;color:var(--muted)}
+.counts{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.pill{border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600}
+.pill.high{background:var(--high-bg);color:var(--high)}
+.pill.medium{background:var(--med-bg);color:var(--med)}
+.pill.info{background:var(--info-bg);color:var(--info)}
+.could{margin:0 0 12px;padding-left:18px}
+.could li{margin:2px 0}
+.f{border-left:3px solid var(--line);padding:6px 10px;margin:8px 0;background:var(--bg);border-radius:0 6px 6px 0}
+.f.high{border-color:var(--high)}.f.medium{border-color:var(--med)}.f.info{border-color:var(--info)}
+.f .t{font-weight:600}
+.f .d{color:var(--muted);font-size:13px}
+.f .x{font-size:13px;margin-top:2px}
+.f .x b{color:var(--accent);font-weight:600}
+.empty{color:var(--muted)}
+.cli{margin-top:22px}
+pre{background:var(--code);padding:10px 12px;border-radius:8px;overflow-x:auto;font-size:13px;margin:6px 0}
+footer{margin-top:28px;color:var(--muted);font-size:13px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <h1>blastmap <span>checker</span></h1>
+  <p class="lede">Paste a config file and see what an agent could do with it. Works with Claude Code <code>settings.json</code>, Codex <code>config.toml</code>, your <code>~/.zshrc</code>, a kubeconfig, or the output of <code>gh auth status</code>. Everything runs in this page; nothing is uploaded.</p>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Paste</h2>
+      <textarea id="input" spellcheck="false" placeholder='{"permissions": {"defaultMode": "bypassPermissions", "allow": ["Bash(git:*)"]}}'></textarea>
+      <div class="row">
+        <button class="primary" id="check">Check</button>
+        <button data-sample="claude">Sample: settings.json</button>
+        <button data-sample="codex">Sample: config.toml</button>
+        <button data-sample="kube">Sample: kubeconfig</button>
+        <button data-sample="gh">Sample: gh auth status</button>
+        <span class="kind" id="kind"></span>
+      </div>
+    </section>
+    <section class="panel" aria-live="polite">
+      <h2>What an agent could do</h2>
+      <div id="out"><p class="empty">Paste something on the left, or load a sample.</p></div>
+    </section>
+  </div>
+
+  <section class="cli">
+    <h2 style="font-size:18px;margin:0 0 6px">Scan your whole machine instead</h2>
+    <p class="lede" style="margin:0 0 6px">The page only sees what you paste. The CLI also checks logged-in cloud CLIs, publish tokens, SSH keys, the Docker socket, sudo, mounted shares, cloud-synced folders and secret-looking env vars. It's read-only and never prints secret values.</p>
+    <pre>npx github:thinx-pro/blastmap</pre>
+  </section>
+
+  <footer>MIT · <a href="https://github.com/thinx-pro/blastmap">github.com/thinx-pro/blastmap</a> · these rules are the CLI's own (<code>rules.js</code>), loaded unchanged.</footer>
+</main>
+<script type="module">
+import * as R from "./rules.js";
+
+const SAMPLES = {
+  claude: JSON.stringify({
+    permissions: {
+      defaultMode: "bypassPermissions",
+      allow: ["Bash(git:*)", "Bash(npm run test:*)", "Bash(gh pr view:*)", "Bash(rm -rf:*)", "Bash(curl:*)"],
+      deny: []
+    },
+    skipDangerousModePermissionPrompt: true
+  }, null, 2),
+  codex: 'model = "gpt-6.1-sol"\napproval_policy = "on-request"\n\n[profiles.night]\napproval_policy = "never"\nsandbox_mode = "danger-full-access"\n',
+  kube: "apiVersion: v1\ncontexts:\n- context:\n    cluster: kind-dev\n    user: kind-dev\n  name: kind-dev\n- context:\n    cluster: eks-prod\n    user: admin\n  name: eks-prod-us-east-1\ncurrent-context: eks-prod-us-east-1\nkind: Config\n",
+  gh: "github.com\n  ✓ Logged in to github.com account octocat (keyring)\n  - Active account: true\n  - Git operations protocol: https\n  - Token scopes: 'delete_repo', 'gist', 'read:org', 'repo', 'workflow'\n"
+};
+
+function detect(text) {
+  const t = text.trim();
+  if (!t) return null;
+  if (t.startsWith("{")) {
+    try {
+      const j = JSON.parse(t);
+      if (j.mcpServers || j.projects) return "claude.json";
+      return "claude";
+    } catch { return "claude"; }
+  }
+  if (/Logged in to /.test(t)) return "gh";
+  if (/^contexts:/m.test(t) || /^current-context:/m.test(t)) return "kube";
+  if (/\b(approval_policy|sandbox_mode)\b/.test(t) || /^\[profiles\./m.test(t)) return "codex";
+  return "shell";
+}
+
+const LABEL = { claude: "Claude Code settings.json", "claude.json": "~/.claude.json", gh: "gh auth status", kube: "kubeconfig", codex: "Codex config.toml", shell: "shell rc" };
+
+function analyze(text) {
+  const kind = detect(text);
+  let list = [];
+  if (kind === "claude") list = R.analyzeClaudeSettings(text, "pasted");
+  else if (kind === "claude.json") {
+    const names = R.mcpServersFromClaudeJson(JSON.parse(text));
+    if (names.length) list = [R.finding("info", "agent", "mcp.servers", `${names.length} MCP server(s) configured`, { detail: names.join(", ") })];
+  }
+  else if (kind === "gh") list = R.analyzeGh(R.parseGhStatus(text), "pasted");
+  else if (kind === "kube") list = R.analyzeKube(R.parseKubeconfig(text), "pasted");
+  else if (kind === "codex") list = R.analyzeCodexConfig(text, "pasted");
+  else if (kind === "shell") list = R.analyzeShellRc(text, "pasted");
+  return { kind, list: R.sortFindings(list.map((f) => ({ ...f, title: R.redact(f.title), detail: R.redact(f.detail) }))) };
+}
+
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+
+function render() {
+  const text = document.getElementById("input").value;
+  const out = document.getElementById("out");
+  const { kind, list } = analyze(text);
+  document.getElementById("kind").textContent = kind ? `read as: ${LABEL[kind]}` : "";
+  out.replaceChildren();
+  if (!kind) { out.append(el("p", "empty", "Paste something on the left, or load a sample.")); return; }
+  const { counts, could } = R.summarize(list);
+  const c = el("div", "counts");
+  for (const s of ["high", "medium", "info"]) c.append(el("span", `pill ${s}`, `${counts[s]} ${s}`));
+  out.append(c);
+  if (!list.length) { out.append(el("p", "empty", "Nothing risky found in this input.")); return; }
+  if (could.length) {
+    const ul = el("ul", "could");
+    for (const x of could) ul.append(el("li", "", (x.severity === "high" ? "🔴 " : "🟠 ") + x.text));
+    out.append(ul);
+  }
+  for (const f of list) {
+    const d = el("div", `f ${f.severity}`);
+    d.append(el("div", "t", `${f.severity.toUpperCase()} · ${f.title}`));
+    if (f.detail) d.append(el("div", "d", f.detail));
+    if (f.fix && f.severity !== "info") { const x = el("div", "x"); x.append(el("b", "", "fix: "), document.createTextNode(f.fix)); d.append(x); }
+    out.append(d);
+  }
+}
+
+document.getElementById("check").addEventListener("click", render);
+document.getElementById("input").addEventListener("input", () => { clearTimeout(window.__t); window.__t = setTimeout(render, 250); });
+for (const b of document.querySelectorAll("[data-sample]")) {
+  b.addEventListener("click", () => { document.getElementById("input").value = SAMPLES[b.dataset.sample]; render(); });
+}
+const q = new URLSearchParams(location.search).get("sample");
+document.getElementById("input").value = SAMPLES[q] || SAMPLES.claude;
+render();
+</script>
+</body>
+</html>
