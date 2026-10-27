@@ -2,6 +2,9 @@
 
 **What could your coding agent delete, publish or change right now?** One read-only command lists everything an agent started from your shell can reach: permission modes, logged-in cloud and Kubernetes CLIs, GitHub token scopes, publish tokens, unencrypted SSH keys, the Docker socket, mounted network shares, cloud-synced folders, and secret-looking env vars. Each item comes with a fix.
 
+<!-- agent-preflight -->
+> **Also a Claude Code skill.** `blastmap` is part of [agent-preflight](https://github.com/thinx-pro/agent-preflight), 16 offline checks for coding agents: `/plugin marketplace add thinx-pro/agent-preflight` then `/plugin install blastmap@agent-preflight`, and ask Claude in plain words.
+
 ![node 18+](https://img.shields.io/badge/node-18%2B-blue) ![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen) ![read-only](https://img.shields.io/badge/scan-read--only-lightgrey) ![macOS | Linux](https://img.shields.io/badge/os-macOS%20%7C%20Linux-lightgrey) ![MIT](https://img.shields.io/badge/license-MIT-green)
 
 ![blastmap output](assets/demo.png)
