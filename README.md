@@ -94,11 +94,3 @@ Tests: `npm test` (node:test, 18 tests, including a no-leak check that every out
 ## License
 
 MIT
-
----
-
-### 中文说明
-
-**blastmap**：一条只读命令，列出「从这个终端启动的编码 Agent 能删掉、发布或改动什么」。检查范围包括：Agent 权限模式（Claude Code 的 bypassPermissions、宽泛的 `Bash(git:*)` 放行规则、Codex 的 danger-full-access、`--dangerously-skip-permissions` 别名）；已登录的云与 K8s（识别看起来是生产环境的 profile 和 context）；gh token 的 `delete_repo` 等 scope；npm、PyPI 等发布凭据；无口令的 SSH 私钥；Docker socket；免密 sudo；已挂载的网络共享和外置盘；会把本地删除同步到云端的 iCloud、Dropbox 等目录；环境变量里看起来像密钥的变量名。每项都附修复建议。
-
-全程只读，不打印任何密钥的值，家目录显示为 `~`，邮箱显示为 `<email>`。用法：`npx github:thinx-pro/blastmap`。不想装的话，可以用[网页版](https://thinx-pro.github.io/blastmap/)粘贴配置检查，数据不离开浏览器。仓库里另附一个 Claude Code Skill（`skill/blast-check`），适合让 Agent 在开始无人值守任务之前先自查一遍。
